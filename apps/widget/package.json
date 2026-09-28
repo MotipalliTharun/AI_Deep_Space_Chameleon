@@ -1,0 +1,24 @@
+{
+  "name": "@space-chameleon/widget",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Chameleon embeddable support widget — one <script> tag, auto-themes to the host site.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "preact": "^10.24.0"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "^2.9.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0",
+    "eslint": "^9.11.0"
+  }
+}

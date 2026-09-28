@@ -1,0 +1,25 @@
+[project]
+name = "space-chameleon-workers"
+version = "0.0.1"
+description = "AI Space Chameleon task engine: priority queue, plan stack, undo stack, DAG execution, dead-letter queue."
+requires-python = ">=3.12"
+dependencies = [
+  "redis>=5.0.0",
+  "sqlalchemy>=2.0.0",
+  "asyncpg>=0.29.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "hypothesis>=6.112.0",
+  "ruff>=0.6.0",
+  "mypy>=1.11.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.mypy]
+strict = true

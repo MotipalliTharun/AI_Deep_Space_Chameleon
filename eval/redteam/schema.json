@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RedTeamCase",
+  "type": "object",
+  "required": ["id", "input", "must_refuse"],
+  "properties": {
+    "id": { "type": "string" },
+    "input": { "type": "string" },
+    "must_refuse": { "type": "boolean", "const": true },
+    "attack_type": {
+      "type": "string",
+      "enum": ["prompt_injection", "other_customer_data", "abuse", "off_topic"]
+    }
+  }
+}

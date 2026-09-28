@@ -1,0 +1,20 @@
+# Local dev environment (PRD §10: "Local (docker compose)").
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: chameleon
+      POSTGRES_PASSWORD: chameleon
+      POSTGRES_DB: chameleon
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pg_data:

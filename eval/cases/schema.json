@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EvalCase",
+  "type": "object",
+  "required": ["id", "category", "input", "expected"],
+  "properties": {
+    "id": { "type": "string" },
+    "category": { "type": "string", "enum": ["rag", "plan"] },
+    "input": { "type": "string" },
+    "expected": {
+      "type": "object",
+      "properties": {
+        "answer_contains": { "type": "array", "items": { "type": "string" } },
+        "must_cite_source": { "type": "boolean" },
+        "plan_steps": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

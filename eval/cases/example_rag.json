@@ -1,0 +1,9 @@
+{
+  "id": "SC-12-order-status-single-order",
+  "category": "rag",
+  "input": "where is my order?",
+  "expected": {
+    "answer_contains": ["order number", "status", "tracking"],
+    "must_cite_source": true
+  }
+}

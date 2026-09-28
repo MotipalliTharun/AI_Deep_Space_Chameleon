@@ -1,0 +1,56 @@
+# CI pipeline per docs/PRD.md §10:
+# lint -> unit -> SAST/secret scan -> integration -> quick eval (AI PRs) -> build -> image scan -> deploy(dev)
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-unit-python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [services/api, services/workers]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+        working-directory: ${{ matrix.service }}
+      - run: ruff check .
+        working-directory: ${{ matrix.service }}
+      - run: pytest --cov=. --cov-fail-under=80
+        working-directory: ${{ matrix.service }}
+
+  lint-and-unit-ts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [apps/widget, apps/dashboard]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+        working-directory: ${{ matrix.app }}
+      - run: npm run lint
+        working-directory: ${{ matrix.app }}
+      - run: npm run test
+        working-directory: ${{ matrix.app }}
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+
+  # TODO(sprint-0/1): integration tests (pytest + Testcontainers: Redis + Postgres)
+  # TODO(sprint-1): quick eval gate (100 cases) on PRs touching services/api or eval/
+  # TODO(sprint-1): build + scan widget/dashboard/api/worker images, deploy to Dev

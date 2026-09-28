@@ -1,0 +1,8 @@
+{
+  "id": "SC-20-exchange-with-rollback",
+  "category": "plan",
+  "input": "Return the blue shoes and send size 9 instead.",
+  "expected": {
+    "plan_steps": ["verify_order_ownership", "create_return", "check_size_stock", "create_exchange_order"]
+  }
+}

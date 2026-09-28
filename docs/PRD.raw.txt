@@ -1,0 +1,1114 @@
+AI Space Chameleon — Project Plan
+
+
+
+
+AI Space Chameleon — Project Plan
+  ​Sep 28, 2026       · ​@tharun
+
+
+1. Executive summary
+AI Space Chameleon is a one-line embeddable support widget that adapts to any
+website's look, answers customers with RAG, runs multi-step requests through a data-
+structure-based task engine ("AI Stacks and Queues"), and hands the chat to a human
+agent with full context when it cannot finish. The MVP launches on Feb 1, 2027, 17 weeks
+after kickoff, with a 7-person team and targets small and mid-sized online stores first.
+
+The problem. Support teams are overloaded with repeat questions, and today's AI agents
+are either expensive per-resolution add-ons locked to one helpdesk (Fin at $0.99,
+Zendesk at $1.50 to $2.00, Gorgias at $0.90 to $1.00 per resolution) or simple FAQ bots that
+cannot carry out multi-step tasks reliably. Customers also distrust bots that trap them: a
+Gartner study found 64% of customers would prefer companies not use AI for service.
+
+The bet. Three things together are the wedge:
+
+ 1. Chameleon widget: one <script> tag, auto-themes to the host site, works on any
+     stack (Shopify, WordPress, React, plain HTML).
+ 2. AI Stacks and Queues: every request becomes a structured task. A priority queue
+    orders work, a stack breaks a request into ordered sub-steps with rollback, and a
+    dependency graph runs independent steps in parallel. The result is predictable,
+    auditable execution instead of one opaque LLM call.
+ 3. Honest handoff: when confidence drops, a step fails, or the customer asks, the task
+    moves to a priority queue of human agents with a summary, the step trail and
+    suggested next action. Customers are never trapped.
+
+Headline targets for MVP (6 months after launch):
+
+
+  Metric                            Target
+
+  Automated resolution rate         40% of chats
+
+  Time to install                   under 10 minutes
+
+  Median first response             under 3 s
+
+  Handoff wait (business hours)     under 2 min
+
+  Paying customers                  50 stores
+
+
+
+
+                                                                                     Page 1 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Metric                                     Target
+
+  Hallucination rate on eval set             under 2%
+
+
+Ask: approve a 2-week discovery and proof of concept, then the MVP build described in
+section 9.
+
+
+2. Market research
+The market is large and growing about 20% a year, but pricing is the top buyer complaint:
+per-resolution fees make the best months the most expensive, and most AI agents only
+work inside their own helpdesk. That leaves room for a flat-priced, helpdesk-neutral
+widget that executes tasks reliably.
+
+
+Market size
+     Grand View Research puts the global chatbot market at $9.6B in 2025 and $11.8B in
+     2026, reaching $41.2B by 2033 (19.6% CAGR). Customer service is the largest
+     application and retail/e-commerce the largest vertical. (source)
+     MarketsandMarkets sizes the wider AI-for-customer-service market at $12.06B in
+     2024, rising to $47.82B by 2030 (25.8% CAGR). (source)
+     Gartner predicts agentic AI will resolve 80% of common service issues without a
+     human by 2029, cutting operating costs about 30%. (source)
+     The counterweight: Gartner also predicts half of companies that cut service staff
+     because of AI will rehire by 2027, and only 20% of service leaders surveyed had
+     actually reduced staff. Human handoff stays essential. (source)
+
+Serviceable market for the MVP (estimate, to validate in discovery): English-speaking
+online stores and SaaS companies with 2 to 50 support agents that run their own website.
+These buyers want AI now but balk at enterprise suites.
+
+
+Competitors
+
+  Product                    Pricing model (2026)       Strength                Gap we exploit
+
+  Fin (formerly              $0.99 per outcome +        Strong AI, now          Bill grows with
+  Intercom)                  seats from $29/mo; 50-     owned by Salesforce     success; assumed
+                             outcome minimum off        (closed Sep 10, 2026)   resolutions billed after
+                             Intercom                                           24 h of silence;
+                                                                                repackaging risk under
+                                                                                Agentforce
+
+
+
+
+                                                                                                   Page 2 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Product                    Pricing model (2026)       Strength                Gap we exploit
+
+  Zendesk AI                 About $1.50 committed /    Deep helpdesk           Needs Zendesk Suite;
+  agents                     $2.00 pay-as-you-go per                            layered add-ons; auto
+                             automated resolution,                              overage billing since
+                             on top of Suite seats                              Jan 2026
+
+  Gorgias AI                 $0.90 to $1.00 per         Shopify order actions   Shopify-centric;
+  Agent                      resolution, and AI                                 double billing
+                             tickets also count as
+                             helpdesk tickets
+
+  Tidio Lyro                 Add-on from $39/mo for     Cheap entry, SMB        Three separate quotas;
+                             50 AI conversations;       friendly                AI capped at low
+                             Plus from $749/mo                                  volume
+
+  Chatbase                   Free, $40, $150, $500/mo   Fastest setup,          Credit caps (bot goes
+                             credit plans               actions, handoff        "unavailable" at zero);
+                                                                                branding removal
+                                                                                extra; actions capped
+                                                                                per plan
+
+
+
+Gaps and positioning
+ 1. Predictable price. Flat tiers by conversation volume, never per resolution. The
+    customer is not punished for success.
+ 2. Helpdesk-neutral. Hand off to Zendesk, Freshdesk, Gorgias, Slack or our own
+     lightweight inbox.
+ 3. Reliable multi-step tasks. The task engine shows every step, retries safely, and rolls
+     back half-finished actions. Competitors mostly expose actions as single tool calls.
+ 4. Looks native. Auto-theming removes the design work that makes most widgets look
+    bolted on.
+ 5. Trust by design. Clear AI disclosure, a "talk to a human" button that always works, and
+    visible sources on every answer.
+
+Positioning line: "The support widget that blends into your site, finishes the job, and
+knows when to call a human."
+
+
+
+3. Product vision and concept
+The product has two halves: the Chameleon widget that customers see, and the AI
+Stacks and Queues engine that turns each request into a structured, trackable task.
+Everything the AI does is a task with steps, a state and an owner, so it can be paused,
+
+
+
+                                                                                                   Page 3 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+retried, audited or handed to a person.
+
+
+The Chameleon widget
+     One-line install: <script src="https://cdn.spacechameleon.ai/w.js" data-
+     site="abc123"></script> , plus plugins for Shopify and WordPress.
+     Auto-theming: on load it reads the host page's computed colors, fonts and corner
+     radius and builds matching design tokens. The site owner can lock or override them in
+     the dashboard.
+     Isolation: renders inside Shadow DOM so host CSS cannot break it and it cannot break
+     the host.
+     Small and fast: loader under 15 KB gzipped; the full chat bundle loads lazily when the
+     bubble is first opened.
+     Context aware: knows the current page, cart and logged-in customer (through a
+     signed token from the host), so answers fit the moment.
+
+
+AI Stacks and Queues: how a request runs
+Each customer message is classified into an intent. Simple questions are answered
+directly with RAG. Anything that needs actions ("change my delivery address", "return
+item 2 and exchange for size M") becomes a Task that the engine plans and executes step
+by step.
+
+
+  Data structure                    Where it is used                   Why it fits
+
+  Priority queue (min-              Incoming task queue, ordered       Most urgent work always runs
+  heap)                             by SLA deadline, customer tier     first; O(log n) insert and pop
+                                    and urgency
+
+  Stack (LIFO)                      Plan execution: a task is          Depth-first execution matches
+                                    decomposed into sub-steps          how multi-step requests unfold;
+                                    pushed onto a stack; nested        easy to resume where it paused
+                                    sub-tasks push on top
+
+  Undo stack                        Every side-effecting step          If a later step fails, pop and run
+                                    pushes its compensating action     compensations in reverse to
+                                    (e.g. "cancel the return label")   leave no half-done work (saga
+                                                                       pattern)
+
+  DAG + topological                 Steps with dependencies            Guarantees correct order and
+  sort                              (verify identity before address    lets independent steps run
+                                    change; independent lookups in     concurrently
+                                    parallel)
+
+
+
+
+                                                                                                     Page 4 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Data structure                    Where it is used                     Why it fits
+
+  FIFO queue per                    Human escalation queue, one          Fair ordering within a skill;
+  agent group                       per skill (billing, returns, tech)   combined with priority for VIP or
+                                                                         angry customers
+
+  Dead-letter queue                 Steps that fail after retries        Nothing is silently lost; ops can
+                                                                         inspect and replay
+
+  Sliding window /                  Rate limits per site and per         Stops abuse and protects LLM
+  token bucket                      visitor                              spend
+
+  LRU cache                         Frequent answers and                 Cuts latency and cost for repeat
+                                    embeddings                           questions
+
+  Finite state machine              Task lifecycle: queued →             Every task is always in exactly
+                                    planning → running → waiting-        one known state, which the
+                                    on-customer → done / failed /        dashboard shows
+                                    escalated
+
+
+Worked example: "Return the blue shoes and send size 9 instead." The planner produces
+four steps: verify order ownership, create return, check size-9 stock, create exchange
+order. Steps 1 then 2 run in order; stock check runs in parallel with step 2. If stock is out at
+step 3, the engine pops the undo stack (cancels the return label) and offers the customer
+a refund or a human. The customer sees a progress card with each step ticked off.
+
+
+4. Target customers, personas and use cases
+The first customer is a small-to-mid online store (2 to 50 agents) whose support is
+swamped by order-status and return questions. SaaS help desks and service businesses
+(bookings, clinics) come after the MVP.
+
+
+  Persona                      Who they are                 Main pain                  What wins them
+
+  Store owner                  Runs a Shopify or            No time to answer          10-minute install, flat
+  (buyer)                      WooCommerce store, 1         chats; cannot afford       price, visible savings
+                               to 5 staff                   per-resolution bills       report
+
+  Support lead                 Manages 5 to 50 agents       Repeat questions,          Task dashboard,
+  (admin)                                                   long queues, no            escalation queue,
+                                                            insight into AI            review tools
+                                                            mistakes
+
+
+
+
+                                                                                                        Page 5 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Persona                      Who they are            Main pain               What wins them
+
+  Support agent                Answers the chats the   Customers repeat        Handoff card with
+  (user)                       AI hands over           themselves after        summary, steps done
+                                                       handoff                 and suggested reply
+
+  End customer                 Shops on the site       Waiting, being          Instant answers,
+                                                       trapped by bots         progress card,
+                                                                               human in one tap
+
+  Developer                    Adds the widget and     Brittle integrations,   Script tag, Shadow
+  (integrator)                 connects APIs           CSS clashes             DOM, typed SDK,
+                                                                               webhooks
+
+
+
+Top use cases for the MVP
+ 1. Where is my order? Lookup by signed customer token or order number + email.
+ 2. Returns and exchanges as a multi-step task with rollback.
+ 3. Policy questions (shipping, returns, warranty) answered from help articles with a
+     source link.
+ 4. Change or cancel an order before it ships.
+ 5. Product questions (size, stock, compatibility) from the catalog.
+ 6. Talk to a human at any time, with context passed along.
+
+
+5. Product requirements (PRD)
+v1 is a web widget in English for online stores, with RAG answers, up to 5 action types run
+by the task engine, and handoff to a built-in agent inbox or Zendesk.
+
+
+Scope
+
+  In scope (v1)                                            Out of scope (v1)
+
+  Web widget with auto-theming, Shopify +                  Mobile SDKs, WhatsApp, email, voice
+  WordPress plugins
+
+  RAG over help articles, URLs, PDFs                       Training custom models
+
+  Task engine with order lookup, return,                   Payments and refunds executed by AI
+  exchange, address change, cancel
+
+  Built-in agent inbox + Zendesk handoff                   Freshdesk, Gorgias, Salesforce connectors
+                                                           (v2)
+
+
+
+
+                                                                                                 Page 6 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  In scope (v1)                                                  Out of scope (v1)
+
+  Admin dashboard: setup, knowledge, tasks,                      Multi-language (v2)
+  analytics, feedback
+
+
+
+Functional requirements
+     FR-1: Widget installs with one script tag and themes itself from the host page.
+     FR-2: Every AI answer shows its source article or the data it used.
+     FR-3: Action requests become tasks with visible steps; the customer sees a progress
+     card.
+     FR-4: Any failed side-effecting step triggers compensation (undo) of earlier steps.
+     FR-5: The "Talk to a human" button is always visible and works in one tap.
+     FR-6: On handoff, the agent receives a summary, transcript, completed steps and a
+     suggested reply.
+     FR-7: Admins can edit knowledge, set tone, pick which actions are enabled and set
+     escalation rules.
+     FR-8: Every conversation and task step is logged and searchable.
+
+
+Non-functional requirements
+
+  Area                         Requirement
+
+  Latency                      First token under 1.5 s, full answer under 3 s for
+                               95% of messages
+
+  Availability                 99.9% monthly for the chat API
+
+  Scale                        1,000 concurrent chats across tenants at launch
+
+  Widget weight                Loader under 15 KB gzipped; no layout shift on host
+                               page
+
+  Security                     Tenant isolation, signed customer tokens,
+                               encryption in transit and at rest, PII masking before
+                               the LLM
+
+  Privacy                      GDPR/CCPA data export and deletion;
+                               configurable retention
+
+  Accessibility                WCAG 2.1 AA (keyboard, screen reader, contrast)
+
+
+
+
+                                                                                       Page 7 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+AI requirements
+     Answer correctness at least 90% and groundedness at least 98% on the eval set.
+     Refuse off-topic, harmful and prompt-injection requests (100% on the red-team set).
+     Always disclose the customer is talking to an AI.
+     Escalate when confidence is below the tenant's threshold, after 2 failed attempts, or
+     on negative sentiment.
+
+
+Example user stories
+SC-12 Order status. As a logged-in customer, I want to ask "where is my order?" so I get
+tracking without waiting.
+
+     Given one open order, when I ask, then I see order number, status and tracking link.
+     Given several open orders, when I ask, then the widget asks which one.
+     Given I am not logged in, when I ask, then it asks for order number and email and
+     reveals nothing until both match.
+
+SC-20 Exchange with rollback. As a customer, I want to exchange an item for another size
+so I don't need an agent.
+
+     Given the new size is in stock, when I confirm, then a return label and exchange order
+     are created and both steps show as done.
+     Given the new size is out of stock, when the check fails, then the return label is
+     cancelled and I am offered a refund or a human.
+
+SC-31 Handoff. As an agent, I want the full context when a chat reaches me so the
+customer never repeats themselves.
+
+     Given an escalated chat, when I open it, then I see a 3-line summary, the steps
+     completed, the failure reason and a suggested reply.
+
+SC-40 Auto-theme. As a store owner, I want the widget to match my brand without design
+work.
+
+     Given my site's primary color and font, when the widget loads, then its bubble, header
+     and buttons use them and pass AA contrast.
+
+
+6. Features, improved and new, each with a feedback loop
+Every feature collects a specific signal, and every signal has a named destination (eval set,
+knowledge base, routing rules or roadmap), so feedback always changes the product
+instead of sitting in a report. Features improved over the HelpBot reference design are
+marked (improved); the rest are new.
+
+
+
+
+                                                                                          Page 8 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Feature                           What it does           Feedback            Where the            Release
+                                                           captured            feedback goes
+
+  Answer with                       Every answer cites     Thumbs              Down-voted           MVP
+  sources                           the article or data    up/down +           answers become
+  (improved)                        used                   optional reason     eval cases;
+                                                           chips (wrong,       "outdated" flags
+                                                           outdated,           the article owner
+                                                           unclear)
+
+  Task progress                     Shows each step of     Per-step "this is   Step failure stats   MVP
+  card (new)                        a multi-step task      wrong" tap          tune the planner
+                                    live                                       prompt and
+                                                                               action configs
+
+  Undo / rollback                   Compensates half-      Automatic: every    Weekly rollback      MVP
+  (new)                             finished actions       rollback logged     report; top causes
+                                                           with cause          become backlog
+                                                                               items
+
+  Confidence-                       Escalates on low       Agent marks         Re-tunes the         MVP
+  based handoff                     confidence,            each handoff        escalation
+  (improved)                        repeated failure or    "needed" or "AI     threshold per
+                                    negative sentiment     could have          tenant
+                                                           handled"
+
+  Agent handoff                     Summary, steps         Agent rates the     Edited replies       MVP
+  card (improved)                   done, failure          summary (1 to 5)    become training
+                                    reason, suggested      and edits the       examples for the
+                                    reply                  suggested reply     summary prompt
+                                                                               and new
+                                                                               knowledge drafts
+
+  Auto-theming                      Matches host site      Owner accepts       Override patterns    MVP
+  (new)                             colors and fonts       or overrides        improve the
+                                                           tokens in the       theme-extraction
+                                                           dashboard           heuristics
+
+  Post-chat CSAT                    1 to 5 rating + free   Rating and          Low-CSAT chats       MVP
+  (improved)                        text at chat end       comment             go to the weekly
+                                                                               review sample
+
+  Knowledge gap                     Clusters questions     Admin approves      Approved gaps        v1.1
+  finder (new)                      the AI could not       or dismisses        create draft
+                                    answer                 each gap            articles for the
+                                                                               owner to publish
+
+
+
+
+                                                                                                       Page 9 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Feature                           What it does          Feedback             Where the           Release
+                                                          captured             feedback goes
+
+  AI-drafted                        Turns resolved        Admin edits and      Published drafts    v1.1
+  articles (new)                    human chats into      publishes            feed RAG; edit
+                                    draft help articles                        distance tracks
+                                                                               draft quality
+
+  Proactive                         Opens the widget      Nudge                Nudges with low     v1.1
+  nudges (new)                      on signals like       dismissed vs.        engagement are
+                                    checkout errors or    engaged              auto-paused
+                                    long idle on the
+                                    returns page
+
+  Agent copilot                     Suggests replies      Suggestion used,     Usage rate by       v1.1
+  (new)                             inside the agent      edited or            intent shows
+                                    inbox                 ignored              where AI is ready
+                                                                               to go autonomous
+
+  Sandbox replay                    Replays past          Side-by-side         Release gate: new   v1.1
+  (new)                             conversations         scores               version must
+                                    against a new                              match or beat
+                                    prompt or model                            current scores
+                                    before release
+
+  Feedback inbox                    One place for all     Triage status        Closed items feed   MVP
+  for admins (new)                  thumbs-down, low      (fixed, won't fix,   the monthly
+                                    CSAT and agent        needs article)       quality report
+                                    flags
+
+  Multi-language                    Detects language      Language-            Per-language eval   v2
+  (new)                             and replies in it     specific thumbs      sets; languages
+                                                          rate                 below target stay
+                                                                               in beta
+
+  Omnichannel                       Same engine on        Channel-level        Channel roadmap     v2
+  (new)                             WhatsApp, email,      CSAT                 priority
+                                    Instagram
+
+
+
+How the feedback loop runs
+ 1. Capture in the widget, the agent inbox and the dashboard (table above).
+ 2. Triage daily: an automatic classifier tags each item (knowledge gap, wrong answer,
+    action failure, UX issue); the support lead reviews a 100-conversation sample weekly.
+ 3. Act: wrong answers become eval cases, gaps become articles, action failures become
+     bug tickets, UX issues go to the design backlog.
+
+
+                                                                                                     Page 10 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+ 4. Verify: the next release must pass the enlarged eval set; the dashboard shows the
+     before/after for each fixed item.
+ 5. Close the loop: customers who left a comment and gave an email get a "we fixed this"
+     note (opt-in).
+
+
+7. Architecture and tech stack
+One multi-tenant backend serves every site: the router sends plain questions to RAG,
+action requests to the task engine, and "human please" straight to the escalation queue.
+The task engine is the differentiator; its queues live in Redis and its task records in
+PostgreSQL so nothing is lost on restart.
+
+
+
+
+system architecture · 3 paths from the intent router
+
+
+
+
+                                                                                          Page 11 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+A failed step in the task engine first runs the undo stack, then moves the task to the
+escalation queue with its trail attached.
+
+
+Core data model
+      tenants , sites (theme tokens, settings), users (admins, agents)
+      conversations , messages , feedback
+
+      tasks (state, priority, deadline, owner), task_steps (order, depends_on, status,
+     compensation), dead_letters
+      documents , document_chunks (pgvector column), eval_cases
+
+
+Tech stack
+
+  Layer                             Choice                               Why
+
+  Widget                            Preact + TypeScript, Vite, Shadow    Tiny bundle, isolated styles
+                                    DOM
+
+  Dashboard + agent                 React + TypeScript, Tailwind         Fast to build, one design system
+  inbox
+
+  API                               Python 3.12 + FastAPI,               Streaming answers; Python is
+                                    WebSockets / SSE                     standard for AI work
+
+  Task workers                      Python workers on Redis Streams      Priority queues, retries,
+                                    (or Celery)                          consumer groups
+
+  LLM                               Hosted LLM API with a small          Cost control; swap models
+                                    model for routing and a larger one   behind one interface
+                                    for planning
+
+  Retrieval                         Embedding model + PostgreSQL         One database for data and
+                                    pgvector                             vectors
+
+  Cache and rate                    Redis                                LRU cache, token buckets,
+  limits                                                                 sessions
+
+  Hosting                           Docker on AWS (ECS Fargate for       Low ops for a small team; CDN
+                                    MVP, EKS later), CloudFront CDN      keeps the widget fast
+                                    for the widget
+
+  IaC and secrets                   Terraform, AWS Secrets Manager       Repeatable environments; no
+                                                                         keys in code
+
+  Observability                     Datadog or Grafana + Sentry;         Latency, errors, token cost,
+                                    Langfuse for LLM traces              answer quality
+
+
+
+
+                                                                                                        Page 12 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Layer                             Choice                                Why
+
+  Integrations                      Shopify Admin API,                    Covers the first customer
+                                    WooCommerce REST, Zendesk             segment
+                                    API, webhooks
+
+
+
+
+8. AI-to-human escalation design
+The AI hands over whenever it cannot finish safely, and the customer never has to repeat
+themselves: the agent gets the summary, the steps already done and a suggested reply.
+Escalations with no outcome are free to the tenant, so we are never paid to keep
+customers away from humans.
+
+
+When the AI escalates
+
+  Trigger                               Rule (tenant-configurable default)               Priority boost
+
+  Customer asks for a                   Any wording, or the button                       Normal
+  human
+
+  Low confidence                        Answer confidence below 0.6, or no source        Normal
+                                        found
+
+  Repeated failure                      2 failed attempts at the same intent             +1
+
+  Task step failure                     A step fails after 3 retries and rollback        +1
+                                        completes
+
+  Negative sentiment                    Frustration detected in 2 consecutive            +2
+                                        messages
+
+  Sensitive topic                       Legal threats, safety, payment disputes,         +2, routed to a
+                                        account security                                 lead
+
+  VIP customer                          Tenant marks a customer tier as VIP              +1
+
+
+
+How a handoff runs
+ 1. The engine freezes the task and writes a handoff packet: 3-line summary, intent,
+     customer details the tenant allows, completed and rolled-back steps, failure reason,
+     suggested reply.
+ 2. The packet enters the escalation priority queue for the right skill group. Order =
+     priority first, then time waiting.
+
+
+
+
+                                                                                                      Page 13 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+ 3. The widget tells the customer honestly: "I'm connecting you to a person. Current wait
+     is about 2 minutes." The position updates live.
+ 4. Agent available: the first free agent in that group claims the chat (claim is atomic, so
+     two agents never take the same chat). The agent sees the packet and replies in the
+     same widget thread.
+ 5. No agent online / after hours: the customer can leave an email; the chat becomes a
+     ticket in the built-in inbox or Zendesk with the packet attached, and the customer gets
+     a reference number.
+ 6. Wait too long: if the wait passes the tenant's SLA (default 5 minutes), the item gains
+     priority and the lead is notified.
+ 7. After the human resolves it, the agent marks "AI should have handled this" or "needed
+     a human". Those labels retune thresholds and add eval cases (section 6).
+
+
+Agent experience
+     Inbox with queues per skill, wait timers and priority badges.
+     One-click "send suggested reply", editable before sending.
+     "Hand back to AI" for the easy tail of a chat (for example, sending a tracking link after
+     the agent approved an exception).
+     Internal notes and transfer to another group with the packet kept.
+
+
+9. MVP plan: scope, team, sprints
+A 7-person team builds the MVP in five two-week sprints after 5 weeks of discovery and
+design, runs a 2-week beta with 10 stores, and launches on Feb 1, 2027. Dates assume a
+kickoff on Oct 5, 2026 and a lighter Sprint 3 over the holidays.
+
+
+
+
+                                                                                        Page 14 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+proposed plan · kickoff Oct 5, 2026
+
+
+MVP must-haves (cut line)
+     Widget with auto-theme, Shopify + WordPress install
+     RAG over help articles with sources
+     Task engine with priority queue, step stack, undo stack, dead-letter queue
+     Three actions: order status, return/exchange, address change
+     Escalation queue + built-in agent inbox + Zendesk ticket fallback
+     Admin dashboard: setup, knowledge, tasks, conversations, feedback inbox
+     Thumbs, CSAT and agent handoff ratings
+     Eval suite (300 cases) and red-team set in CI
+
+Anything else waits for v1.1 unless it replaces a must-have.
+
+
+Team
+
+  Role                                 People    Owns
+
+  Product manager (also business       1         PRD, backlog, beta customers, pricing
+  analyst)
+
+  Tech lead / architect                1         Architecture, task engine design, code
+                                                 reviews
+
+  Frontend engineer                    1         Widget, dashboard, agent inbox
+
+  Backend engineer                     1         API, workers, integrations (Shopify,
+                                                 Zendesk)
+
+
+
+
+                                                                                         Page 15 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+  Role                                           People   Owns
+
+  AI engineer                                    1        Prompts, RAG, planner, guardrails, evals
+
+  QA engineer (SDET)                             1        Test plans, E2E, load tests, beta UAT
+
+  Designer + DevOps                              0.5 +    Figma, design system / CI/CD, Terraform,
+                                                 0.5      monitoring
+
+
+
+Sprint plan
+
+  Sprint         Dates              Goal                     Main stories
+
+  0              Nov 9 to           Foundation               Repo, CI/CD, Terraform dev env, skeleton
+                 Nov 20                                      widget + API, coding standards
+
+  1              Nov 23 to          Answers questions        Knowledge ingestion, RAG with sources,
+                 Dec 4                                       widget chat + streaming, auto-theme v1
+
+  2              Dec 7 to Dec       Runs tasks               Priority queue, planner, execution +
+                 18                                          undo stacks, order-status action, eval
+                                                             set v1
+
+  3              Dec 21 to          Hands off (reduced       Escalation queue, handoff packet, agent
+                 Jan 1              capacity)                inbox, Zendesk fallback
+
+  4              Jan 4 to Jan       Ready to ship            Return/exchange + address actions,
+                 15                                          dashboard analytics, feedback inbox,
+                                                             load + security tests
+
+
+
+Definition of done
+      Merged via reviewed PR; CI green; coverage at least 80%
+      Acceptance criteria verified by QA
+      Eval scores equal or better for any AI change
+      No new critical or high security findings
+      Docs and runbook updated; demoed to the PM
+
+
+10. Testing, CI/CD, deployment and operations
+The quality system follows the HelpBot playbook (test pyramid, eval gates, canary
+releases) and adds two things the task engine needs: failure-injection tests for rollback
+and a widget compatibility matrix across real host sites.
+
+
+
+
+                                                                                                  Page 16 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+Test plan
+
+  Test type                         Tool                    Example for this product     Runs
+
+  Unit                              pytest, Vitest          Heap orders tasks by         Every PR
+                                                            deadline; undo stack pops
+                                                            in reverse order
+
+  Data-structure                    Hypothesis              Random step DAGs always      Every PR
+  property tests                                            execute in a valid
+                                                            topological order; no step
+                                                            runs twice
+
+  Integration                       pytest +                Worker pulls from Redis,     Every PR
+                                    Testcontainers          writes task state to
+                                                            Postgres, survives restart
+
+  Failure injection                 Custom fault flags      Step 3 of an exchange        Every PR
+                                                            fails: return label is       touching the
+                                                            cancelled, task escalated    engine
+
+  AI evals                          Promptfoo / Ragas +     300 questions and 60         PRs touching
+                                    custom                  multi-step tasks scored      AI, nightly
+                                                            for correctness,
+                                                            groundedness, plan
+                                                            validity
+
+  Red team                          Custom set              Prompt injection, other-     Every AI PR +
+                                                            customer data requests,      before release
+                                                            abuse
+
+  Widget                            Playwright on 20 real   Theme matches, no CSS        Nightly
+  compatibility                     theme templates         bleed, no layout shift
+
+  E2E                               Playwright              Customer asks, sees          After deploy to
+                                                            progress card, gets          staging
+                                                            handed to agent
+
+  Load                              k6                      1,000 concurrent chats;      Before release
+                                                            p95 under 3 s; queue lag
+                                                            under 1 s
+
+  Accessibility                     axe + screen reader     Widget usable by             Before release
+                                    pass                    keyboard and screen
+                                                            reader
+
+
+
+
+                                                                                                    Page 17 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+Launch quality gate
+     Correctness at least 90%, groundedness at least 98%, plan validity at least 95%, red-
+     team refusal 100%
+     Zero stuck tasks in a 24-hour soak test (every task reaches done, escalated or dead-
+     letter)
+     No open critical or high bugs; pen test and privacy review signed off
+     Beta stores rate the product 4/5 or higher and 8 of 10 agree to convert to paid
+
+
+CI/CD and environments
+     GitHub Flow: short-lived feature/SC-xx branches, protected main , squash merges,
+     conventional commits, release tags vX.Y.Z .
+     Pipeline: lint, unit tests, SAST and secret scan, integration tests, quick eval (100 cases),
+     build images, image scan, deploy to Dev, then Staging with full eval and E2E, then
+     manual approval and canary to Production.
+     Widget releases are versioned on the CDN; each tenant can be pinned to a version, and
+     new versions roll out 5%, 25%, 100% by tenant.
+     Environments: Local (docker compose), Dev, Staging (anonymized copies of beta-store
+     data), Production.
+
+
+Operations
+
+  Area                     Metric                               Alert when
+
+  Reliability              API error rate, worker crashes       Error rate over 1% for 5 min
+
+  Queues                   Task queue depth and oldest-task     Oldest task over 60 s; escalation
+                           age; escalation wait                 wait over tenant SLA
+
+  Engine                   Rollback count, dead-letter count    Dead letters over 10 per hour
+  health
+
+  Speed                    p95 latency, LLM latency             p95 over 3 s for 10 min
+
+  Cost                     Tokens and spend per conversation,   Daily spend over 120% of budget
+                           per tenant
+
+  Quality                  Thumbs-down rate, handoff rate,      Thumbs-down rate doubles week
+                           CSAT                                 over week
+
+  Safety                   Blocked injections, PII detections   Spike over baseline
+
+
+
+
+                                                                                                Page 18 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+On-call rotation with runbooks; blameless post-mortems; a kill switch per tenant turns the
+AI off so all chats go straight to humans.
+
+
+11. Business model, go-to-market and KPIs
+Flat monthly tiers by conversation volume, with unlimited agent seats and no per-
+resolution fee, undercut per-outcome competitors as soon as a store automates a few
+hundred chats a month. Prices below are proposals to test with beta stores.
+
+
+Proposed pricing
+
+  Plan                  Price /     AI              Includes
+                        month       conversations
+
+  Free                  $0          100             Widget, RAG answers, "Powered by" badge
+
+  Starter               $49         1,000           No badge, 1 action, agent inbox
+
+  Growth                $199        5,000           All actions, Zendesk handoff, analytics,
+                                                    feedback inbox
+
+  Scale                 $599        20,000          Priority support, SSO, custom actions via
+                                                    webhook
+
+  Enterprise            Custom      Custom          SLA, data residency, dedicated model
+                                                    options
+
+
+Overage: $15 per extra 1,000 conversations, with alerts at 80% and 100% and a hard cap
+the owner controls. The widget never goes dark: past the cap it falls back to human
+handoff.
+
+Comparison point: a store with 2,000 AI resolutions a month pays about $1,980 in Fin
+outcome fees alone at $0.99 each, before seats (source). The same volume fits our $199
+Growth plan.
+
+Unit economics to prove in the PoC: LLM + infrastructure cost per conversation must
+stay under $0.03 so Growth keeps a gross margin above 70%. Levers: small model for
+routing, LRU answer cache, short prompts, larger model only for planning.
+
+
+Go-to-market
+ 1. Design partners (now to launch): recruit 10 beta stores from Shopify and
+     WooCommerce communities; free for 3 months in exchange for weekly feedback calls.
+ 2. Marketplaces at launch: Shopify App Store and WordPress plugin directory listings
+     with a 10-minute setup video.
+
+
+                                                                                           Page 19 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+ 3. Content: honest pricing comparisons and a public "AI cost calculator" that shows per-
+     resolution vs. flat pricing at the visitor's volume.
+ 4. Agencies: revenue share for web agencies that install the widget on client stores.
+ 5. Product-led growth: the free tier's badge links to a signup page; upgrade prompts
+     appear when usage passes 80%.
+
+
+KPIs
+
+  KPI                               Definition                                Target at 6 months post-
+                                                                              launch
+
+  Automation rate                   Chats resolved without a human,           40%
+                                    confirmed or no follow-up in 24 h
+
+  Task success rate                 Multi-step tasks completed without        85%
+                                    rollback or escalation
+
+  CSAT                              Average post-chat rating                  4.3 / 5
+
+  Handoff wait                      Median time from escalation to agent      Under 2 min
+                                    reply, business hours
+
+  Wrong-answer rate                 Thumbs-down tagged "wrong" per 100 AI     Under 2
+                                    answers
+
+  Activation                        Signups that install and get a first AI   60%
+                                    answer within 24 h
+
+  Paying stores                     Active paid tenants                       50
+
+  Net revenue                       Revenue kept and expanded from            Over 100%
+  retention                         month-1 cohort
+
+  Cost per                          LLM + infra cost                          Under $0.03
+  conversation
+
+
+
+
+12. Risks, open questions and next steps
+The biggest risks are AI taking a wrong action on a real order and LLM costs eating the
+flat-price margin; both are addressed in the PoC before the build is funded.
+
+
+
+
+                                                                                                Page 20 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+Risks
+
+  Risk                                      Impact     Mitigation
+
+  AI takes a wrong action (wrong order      High       Ownership check before every action,
+  changed)                                             customer confirmation for side effects,
+                                                       undo stack, action allow-list per tenant
+
+  LLM cost per conversation too high for    High       Model routing, caching, per-tenant
+  flat pricing                                         budgets; prove under $0.03 in PoC
+
+  Prompt injection via customer text or     High       Input/output guardrails, tool calls
+  help articles                                        validated against schema, red-team set
+                                                       in CI
+
+  Auto-theming produces unreadable          Medium     Contrast check with AA fallback;
+  colors                                               owner override
+
+  Widget breaks on unusual host sites       Medium     Shadow DOM, nightly compatibility
+                                                       matrix, per-tenant version pinning
+
+  Incumbents cut prices (e.g. Fin under     Medium     Compete on neutrality, task reliability
+  Salesforce)                                          and native look, not price alone
+
+  Customer distrust of AI support           Medium     AI disclosure, always-on human button,
+                                                       visible sources
+
+  Privacy and compliance (GDPR/CCPA)        Medium     PII masking, DPA with LLM provider,
+                                                       retention settings, data export/delete
+
+
+
+Open questions
+     Which LLM provider and models give the best cost-to-quality at our target of under
+     $0.03 per conversation?
+     Do beta stores accept flat tiers at $49 / $199 / $599, or do they want usage-only pricing?
+     Is Shopify-first right, or should WooCommerce launch at the same time?
+     Should the built-in agent inbox be a core product or only a fallback to existing
+     helpdesks?
+     How much of the task planner can be deterministic templates vs. LLM-generated plans
+     for v1?
+
+
+Next steps (first 2 weeks)
+     Approve the discovery and PoC budget
+     Interview 15 store owners and 10 support agents; collect 200 real anonymized chats
+
+
+
+                                                                                          Page 21 of 22
+AI Space Chameleon — Project Plan
+
+
+
+
+     Build a PoC: widget + RAG + one two-step task with rollback, measured on 50 real
+     questions
+     Measure cost per conversation and answer correctness in the PoC
+     Sign 10 design-partner stores
+     Go/No-Go review for the MVP build with the numbers above
+
+
+Sources
+     Grand View Research, Chatbot Market report (June 2026)
+     MarketsandMarkets, AI for Customer Service Market
+     Gartner, agentic AI to resolve 80% of common issues by 2029
+     Gartner, half of companies that cut staff due to AI will rehire by 2027
+     Gartner survey on customers preferring no AI in service (via BuildMVPFast)
+     Macha, Intercom Fin pricing (checked Sep 24, 2026)
+     Voiceflow, Zendesk AI agents pricing
+     Chatarmin, Gorgias pricing 2026
+     Chatarmin, Tidio pricing 2026
+     Chatbase, product and pricing
+     Reference design: "How a Big Company Builds an AI Project: HelpBot, End to End"
+     (attached PDF)
+
+
+
+
+                                                                                   Page 22 of 22
+
