@@ -3,12 +3,19 @@
 Placeholder for Sprint 0/1: turn this into real migrations under `services/api/app/models`
 once the ORM (SQLAlchemy + Alembic, proposed) is wired up.
 
-## tenants
-- id, name, plan, created_at
+Implemented tables live in `services/api/app/models` with Alembic migrations in
+`services/api/migrations`. Auth tables are documented in [`AUTH.md`](./AUTH.md).
+
+## tenants  ✅ implemented
+- id, name, slug (unique), plan, is_active, created_at, updated_at
 ## sites
 - id, tenant_id, domain, theme_tokens (json), settings (json)
-## users
-- id, tenant_id, role (admin | agent), email, skill_groups (json)
+## users  ✅ implemented
+- id, tenant_id, role (owner | admin | agent), email (unique), full_name, password_hash (nullable for SSO),
+  is_active, failed_login_count, locked_until, last_login_at, password_changed_at
+- TODO: skill_groups (json) when the escalation queue lands
+## auth_sessions, refresh_tokens, audit_events  ✅ implemented
+- see [`AUTH.md`](./AUTH.md)
 
 ## conversations
 - id, tenant_id, site_id, customer_ref, channel, state, created_at

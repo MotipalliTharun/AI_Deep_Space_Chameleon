@@ -56,11 +56,13 @@ See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full system diagram
 ```bash
 cp .env.example .env          # fill in LLM provider key, etc.
 docker compose up -d          # Postgres (pgvector) + Redis
-cd services/api && pip install -e ".[dev]" && uvicorn app.main:app --reload
+cd services/api && pip install -e ".[dev]" && alembic upgrade head && uvicorn app.main:app --reload
 cd services/workers && pip install -e ".[dev]" && python -m workers.main
 cd apps/widget && npm install && npm run dev
-cd apps/dashboard && npm install && npm run dev
+cd apps/dashboard && npm install && npm run dev   # http://localhost:5173 → "Create a workspace"
 ```
+
+Dashboard sign-in, roles and security model: [`docs/AUTH.md`](./docs/AUTH.md).
 
 ## MVP must-haves (v1 cut line)
 
@@ -78,4 +80,7 @@ Anything else waits for v1.1 unless it replaces a must-have.
 ## Status
 
 Sprint 0 (Foundation) scaffold — repo structure, CI/CD skeleton, skeleton widget + API,
-coding standards. See [`docs/PRD.md`](./docs/PRD.md) section 9 for the full sprint plan.
+coding standards.
+
+- ✅ Multi-tenant data layer (SQLAlchemy 2 async + Alembic) and dashboard auth: sign-up,
+  sign-in, rotating refresh tokens, RBAC (owner/admin/agent), team management, audit log. See [`docs/PRD.md`](./docs/PRD.md) section 9 for the full sprint plan.

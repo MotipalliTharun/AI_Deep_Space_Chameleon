@@ -25,6 +25,38 @@ jobs:
       - run: pytest --cov=. --cov-fail-under=80
         working-directory: ${{ matrix.service }}
 
+  api-postgres:
+    # Same suite against real Postgres, plus migration up/down/drift checks.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: chameleon
+          POSTGRES_PASSWORD: chameleon
+          POSTGRES_DB: chameleon
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U chameleon" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://chameleon:chameleon@localhost:5432/chameleon
+      TEST_DATABASE_URL: postgresql+asyncpg://chameleon:chameleon@localhost:5432/chameleon_test
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: mypy app
+      - run: ruff format --check .
+      - run: alembic upgrade head && alembic downgrade base && alembic upgrade head && alembic check
+      - run: PGPASSWORD=chameleon psql -h localhost -U chameleon -c "CREATE DATABASE chameleon_test"
+      - run: pytest --cov --cov-fail-under=80
+
   lint-and-unit-ts:
     runs-on: ubuntu-latest
     strategy:
@@ -39,6 +71,8 @@ jobs:
         working-directory: ${{ matrix.app }}
       - run: npm run lint
         working-directory: ${{ matrix.app }}
+      - run: npm run typecheck --if-present
+        working-directory: ${{ matrix.app }}
       - run: npm run test
         working-directory: ${{ matrix.app }}
 
@@ -51,6 +85,5 @@ jobs:
       - name: gitleaks
         uses: gitleaks/gitleaks-action@v2
 
-  # TODO(sprint-0/1): integration tests (pytest + Testcontainers: Redis + Postgres)
   # TODO(sprint-1): quick eval gate (100 cases) on PRs touching services/api or eval/
   # TODO(sprint-1): build + scan widget/dashboard/api/worker images, deploy to Dev
