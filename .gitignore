@@ -30,3 +30,7 @@ infra/terraform/*.tfvars
 # Editors
 .vscode/
 .idea/
+
+# Test artifacts
+.coverage
+coverage/
